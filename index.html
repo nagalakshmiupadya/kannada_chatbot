@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ಸೀರೆ ಮಹಲ್ ಚಾಟ್‌ಬಾಟ್</title>
+    <style>
+        body {
+            font-family: 'Noto Sans Kannada', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #chatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chatbotHeader {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        #chatMessages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #chatInput {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Noto Sans Kannada', Arial, sans-serif;
+        }
+
+        .option-button {
+            width: 100%;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            font-family: 'Noto Sans Kannada', Arial, sans-serif;
+            transition: background-color 0.3s;
+        }
+
+        .option-button:hover {
+            background-color: #45a049;
+        }
+
+        #submitBtn, #speechBtn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        #chatbotToggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            transition: none;
+            transition: transform 0.3s ease;
+            transform-origin: center;
+        }
+
+        #chatbotToggle.minimized {
+            transform: scale(0.8);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(0.9); }
+            100% { transform: scale(0.8); }
+        }
+
+        #closeChatBtn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 5px 0;
+        }
+
+        .user-message {
+            background-color: #e3f2fd;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: #f5f5f5;
+            align-self: flex-start;
+        }
+
+        @media (max-width: 600px) {
+            #chatbot {
+                width: 100%;
+                height: 100%;
+                bottom: 0;
+                right: 0;
+                border-radius: 0;
+            }
+
+            #chatbotToggle {
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .option-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.3s;
+        }
+        
+        .option-button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
+            margin: 12px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+
+        .bot-message {
+            background-color: #f5f5f5;
+            margin-right: auto;
+            border-bottom-left-radius: 2px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .loading-indicator {
+            color: #666;
+            padding: 12px;
+            font-style: italic;
+            margin: 8px 0;
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+
+        .loading-indicator {
+            color: #666;
+            padding: 8px;
+            font-style: italic;
+        }
+
+        #chatMessages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chatMessages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        #chatMessages::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        #chatMessages::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chatbotToggle" onclick="toggleChatbot()">💬</div>
+
+<div id="chatbot">
+    <div id="chatbotHeader">
+        <span>ಸೀರೆ ಮಹಲ್</span>
+        <button id="closeChatBtn" onclick="closeChatbot()">✕</button>
+    </div>
+    <div id="chatMessages"></div>
+    <div id="chatInput">
+        <input type="text" id="userInput" placeholder="ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ..." onkeydown="if(event.key === 'Enter') submitMessage();">
+        <button id="submitBtn" onclick="submitMessage()">▶</button>
+        <button id="speechBtn" onclick="startSpeechRecognition()">🎤</button>
+    </div>
+</div>
+
+<script>
+    let chatHistory = [];
+
+    function saveMessageToHistory(sender, message) {
+        chatHistory.push({ sender, message });
+        updateChatDisplay();
+    }
+
+    function updateChatDisplay() {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML = ''; 
+        
+        chatHistory.forEach(msg => {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${msg.sender}-message`;
+            
+            if (msg.sender === 'bot') {
+                const lines = msg.message.split('\n').filter(line => line.trim());
+                const formattedMessage = lines.map(line => {
+                    line = line.trim();
+                    return line.startsWith('•') ? line : `• ${line}`;
+                }).join('\n');
+                
+                messageDiv.innerHTML = `<strong>ಸೀರೆ ಮಹಲ್:</strong>\n${formattedMessage}`;
+            } else {
+                messageDiv.innerHTML = `<strong>ನೀವು:</strong> ${msg.message}`;
+            }
+            
+            chatMessages.appendChild(messageDiv);
+        });
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Modify your existing appendMessage function
+    function appendMessage(sender, message, isError = false) {
+        if (!isError) {
+            saveMessageToHistory(sender, message);
+        } else {
+            const chatMessages = document.getElementById("chatMessages");
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message error-message`;
+            messageDiv.innerHTML = message;
+            chatMessages.appendChild(messageDiv);
+        }
+    }
+
+    // Modify your existing closeChatbot function
+    function closeChatbot() {
+        const chatbot = document.getElementById("chatbot");
+        const toggleBtn = document.getElementById("chatbotToggle");
+        
+        // Animate the closing
+        chatbot.style.transform = "scale(0.95)";
+        chatbot.style.opacity = "0";
+        
+        // After animation, hide chatbot and show toggle
+        setTimeout(() => {
+            chatbot.style.display = "none";
+            chatbot.style.transform = "";
+            chatbot.style.opacity = "";
+            toggleBtn.style.visibility = "visible";
+            
+            // Add minimized class to toggle button if there's chat history
+            if (chatHistory.length > 0) {
+                toggleBtn.classList.add("minimized");
+                toggleBtn.innerHTML = "💬 <small>" + chatHistory.length + "</small>";
+            }
+        }, 200);
+    }
+
+    // Modify your existing toggleChatbot function
+    function toggleChatbot() {
+        const chatbot = document.getElementById("chatbot");
+        const toggleBtn = document.getElementById("chatbotToggle");
+        
+        if (chatbot.style.display === "none" || chatbot.style.display === "") {
+            chatbot.style.display = "flex";
+            chatbot.style.opacity = "0";
+            chatbot.style.transform = "scale(0.95)";
+            
+            setTimeout(() => {
+                chatbot.style.opacity = "1";
+                chatbot.style.transform = "scale(1)";
+            }, 10);
+            
+            toggleBtn.style.visibility = "hidden";
+            toggleBtn.classList.remove("minimized");
+            toggleBtn.innerHTML = "💬";
+            
+            if (chatHistory.length === 0) {
+                showGreeting();
+            } else {
+                updateChatDisplay();
+            }
+        } else {
+            chatbot.style.display = "none";
+            toggleBtn.style.visibility = "visible";
+        }
+    }
+
+    const mainOptions = [
+        "ವೆಬ್‌ಸೈಟ್‌ನಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸೀರೆಗಳನ್ನು ಅನ್ವೇಷಿಸಿ",
+        "ಲಭ್ಯವಿರುವ ಸೀರೆ ಪ್ರಕಾರಗಳು",
+        "ಡೆಲಿವರಿ ಮತ್ತು ರಿಟರ್ನ್ ಪಾಲಿಸಿ",
+        "ಗ್ರಾಹಕರ ಬೆಂಬಲ"
+    ];
+
+    const subOptions = {
+        "ವೆಬ್‌ಸೈಟ್‌ನಲ್ಲಿ ಲಭ್ಯವಿರುವ ಸೀರೆಗಳನ್ನು ಅನ್ವೇಷಿಸಿ": [
+            "ವಿಶೇಷ ಸಂಗ್ರಹ ಲಭ್ಯವಿದೆ",
+            "ಹಬ್ಬದ ಆಫರ್‌ಗಳು ಮತ್ತು ಡೀಲ್‌ಗಳು",
+            "ಸೀರೆ ರಿಯಾಯಿತಿ (ಕ್ಲಿಯರೆನ್ಸ್ ಮಾರಾಟ)"
+        ],
+        "ಲಭ್ಯವಿರುವ ಸೀರೆ ಪ್ರಕಾರಗಳು": [
+            "ರೇಷ್ಮೆ ಸೀರೆ (ಬೆಲೆ ಶ್ರೇಣಿ ಲಭ್ಯವಿದೆ)",
+            "ಹತ್ತಿ ಸೀರೆ (ಬೆಲೆ ಶ್ರೇಣಿ ಲಭ್ಯವಿದೆ)",
+            "ಜರಿ ಸೀರೆ (ಬೆಲೆ ಶ್ರೇಣಿ ಲಭ್ಯವಿದೆ)",
+            "ಪಾಲಿಸ್ಟರ್ ಸೀರೆ (ಬೆಲೆ ಶ್ರೇಣಿ ಲಭ್ಯವಿದೆ)"
+        ],
+        "ಡೆಲಿವರಿ ಮತ್ತು ರಿಟರ್ನ್ ಪಾಲಿಸಿ": [
+            "ಶಿಪ್ಪಿಂಗ್ ಲಭ್ಯವಿರುವ ಸ್ಥಳಗಳು",
+            "ರಿಟರ್ನ್ ಪಾಲಿಸಿ"
+        ]
+    };
+
+    // Initialize speech recognition once
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'kn-IN';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    let recordingTimeout;
+
+    function startSpeechRecognition() {
+        try {
+            recognition.start();
+            const speechBtn = document.getElementById("speechBtn");
+            speechBtn.style.backgroundColor = "#ff4444";
+        } catch (error) {
+            console.error('Speech recognition error:', error);
+        }
+    }
+
+    function showGreeting() {
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.innerHTML = `
+            <p><strong>ಸೀರೆ ಮಹಲ್:</strong> ನಮಸ್ಕಾರ! ಸೀರೆ ಮಹಲ್‌ಗೆ ಸ್ವಾಗತ! ನಿಮಗೆ ಪರಿಪೂರ್ಣ ಸೀರೆಯನ್ನು ಹುಡುಕಲು ನಾನು ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?</p>
+        `;
+        showOptions(mainOptions);
+    }
+
+    function showOptions(options) {
+        const optionsContainer = document.createElement("div");
+        optionsContainer.className = "options-container";
+        
+        options.forEach(option => {
+            const button = document.createElement("button");
+            button.className = "option-button";
+            button.textContent = option;
+            button.onclick = () => handleOptionClick(option);
+            optionsContainer.appendChild(button);
+        });
+        
+        const chatMessages = document.getElementById("chatMessages");
+        chatMessages.appendChild(optionsContainer);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function handleOptionClick(option) {
+        const chatMessages = document.getElementById("chatMessages");
+        
+        // Remove any existing options
+        const existingOptions = chatMessages.querySelectorAll('.options-container');
+        existingOptions.forEach(container => container.remove());
+        
+        // Create user message
+        appendMessage('user', option);
+        
+        if (subOptions[option]) {
+            showOptions(subOptions[option]);
+            
+            // Add back button
+            const backButton = document.createElement("button");
+            backButton.className = "option-button";
+            backButton.textContent = "↩ ಮುಖ್ಯ ಮೆನುಗೆ ಹಿಂತಿರುಗಿ";
+            backButton.onclick = () => {
+                const options = chatMessages.querySelectorAll('.options-container');
+                options.forEach(container => container.remove());
+                showOptions(mainOptions);
+            };
+            chatMessages.appendChild(backButton);
+        } else {
+            // Show loading indicator
+            const loadingIndicator = showLoading();
+            
+            // Handle sub-option selection
+            fetch("http://127.0.0.1:5000/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: option }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                removeLoading(loadingIndicator);
+                appendMessage('bot', data.response || data.data);
+                showOptions(mainOptions);
+            })
+            .catch(error => {
+                removeLoading(loadingIndicator);
+                console.error("Error:", error);
+                appendMessage('bot', 'ಕ್ಷಮಿಸಿ, ದೋಷ ಸಂಭವಿಸಿದೆ', true);
+            });
+        }
+        
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function submitMessage() {
+        const userInput = document.getElementById("userInput");
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        // Clear input
+        userInput.value = "";
+        
+        // Display user message
+        appendMessage('user', message);
+        
+        // Show loading indicator        // Add this at the beginning of your script section
+        let chatHistory = [];
+        
+        function saveMessageToHistory(sender, message) {
+            chatHistory.push({ sender, message });
+           updateChatDisplay();
+        }
+
+        function updateChatDisplay() {
+      const chatMessages = document.getElementById("chatMessages");
+      chatMessages.innerHTML = '';
+      
+      chatHistory.forEach(msg => {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `message ${msg.sender}-message`;
+        
+        if (msg.sender === 'bot') {
+          // Format multi-line messages (adding bullets)
+          const lines = msg.message.split('\n').filter(line => line.trim());
+          const formattedMessage = lines.map(line => {
+              line = line.trim();
+              return line.startsWith('•') ? line : `• ${line}`;
+          }).join('<br>'); // Use <br> for line breaks in HTML
+          messageDiv.innerHTML = `<strong>ಸೀರೆ ಮಹಲ್:</strong><br>${formattedMessage}`;
+        } else {
+          messageDiv.innerHTML = `<strong>ನೀವು:</strong> ${msg.message}`;
+        }
+        chatMessages.appendChild(messageDiv);
+      });
+      
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+        
+        function loadChatHistory() {
+            const savedHistory = localStorage.getItem('chatHistory');
+            if (savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+                const chatMessages = document.getElementById("chatMessages");
+                chatMessages.innerHTML = ''; // Clear default message
+                
+                chatHistory.forEach(msg => {
+                    const senderName = msg.sender === 'bot' ? '<strong>ಸೀರೆ ಮಹಲ್</strong>' : 'You';
+                    chatMessages.innerHTML += `<p><strong>${senderName}:</strong> ${msg.message}</p>`;
+                });
+            }
+        }
+        
+        // Modify your submitMessage function to include history saving
+        function submitMessage() {
+            // ...existing code...
+            
+            // Save user message
+            saveMessageToHistory('user', userInput);
+            
+            fetch("http://localhost:5000/chat", {
+                // ...existing fetch code...
+            })
+            .then(data => {
+                chatMessages.removeChild(typingIndicator);
+                if (data && data.response) {
+                    const botResponse = data.response;
+                    // Save bot response
+                    saveMessageToHistory('bot', botResponse);
+                    chatMessages.innerHTML += `<p><strong>ಸೀರೆ ಮಹಲ್:</strong> ${botResponse}</p>`;
+                }
+                // ...rest of existing code...
+            });
+        }
+        
+        // Add this line at the end of your existing DOMContentLoaded event or script
+        document.addEventListener('DOMContentLoaded', loadChatHistory);
+        const loadingIndicator = showLoading();
+
+        fetch("http://127.0.0.1:5000/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: message }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            removeLoading(loadingIndicator);
+            appendMessage('bot', data.response || data.data);
+            showOptions(mainOptions); // Show options after response
+        })
+        .catch(error => {
+            removeLoading(loadingIndicator);
+            console.error("Error:", error);
+            appendMessage('bot', 'ಕ್ಷಮಿಸಿ, ದೋಷ ಸಂಭವಿಸಿದೆ', true);
+        });
+    }
+
+    recognition.onend = () => {
+        const speechBtn = document.getElementById("speechBtn");
+        speechBtn.style.backgroundColor = "#4CAF50";
+        clearTimeout(recordingTimeout);
+    };
+
+    // Update styles for options
+    const style = document.createElement('style');
+    style.textContent = `
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .option-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: left;
+            transition: background-color 0.3s;
+        }
+        
+        .option-button:hover {
+            background-color: #45a049;
+        }
+    `;
+    document.head.appendChild(style);
+
+    function closeChatbot() {
+        const chatbot = document.getElementById("chatbot");
+        const toggleBtn = document.getElementById("chatbotToggle");
+        chatbot.style.display = "none";
+        toggleBtn.style.visibility = "visible";
+    }
+
+    // Speech recognition setup for Kannada
+    recognition.lang = 'kn-IN';  // Set language to Kannada
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById("userInput").value = text;
+        submitMessage();
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+    };
+
+  
+// Speech recognition setup and handlers
+recognition.continuous = false;
+recognition.interimResults = false;
+
+recognition.onresult = (event) => {
+    const kannadaText = event.results[0][0].transcript;
+    document.getElementById("userInput").value = kannadaText;
+    submitMessage();
+};
+
+recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
+    const chatMessages = document.getElementById("chatMessages");
+    chatMessages.innerHTML += `
+        <p class="error-message"><strong>Error:</strong> ಧ್ವನಿ ಗುರುತಿಸುವಿಕೆಯಲ್ಲಿ ದೋಷ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</p>
+    `;
+};
+
+recognition.onend = () => {
+    const speechBtn = document.getElementById("speechBtn");
+    speechBtn.style.backgroundColor = "#4CAF50";
+};
+
+recognition.onstart = () => {
+    const speechBtn = document.getElementById("speechBtn");
+    speechBtn.style.backgroundColor = "#ff4444";
+};
+
+// Function to handle chat history
+function appendMessage(sender, message, isError = false) {
+    const chatMessages = document.getElementById("chatMessages");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message ${isError ? 'error' : ''}`;
+    
+    if (sender === 'bot') {
+        // Split message into lines and filter out empty lines
+        const lines = message.split('\n').filter(line => line.trim());
+        // Format each line as a bullet point with proper spacing
+        const formattedMessage = lines.map(line => {
+            line = line.trim();
+            return line.startsWith('•') ? line : `• ${line}`;
+        }).join('\n');
+        
+        messageDiv.innerHTML = `<strong>ಸೀರೆ ಮಹಲ್:</strong>\n${formattedMessage}`;
+    } else {
+        messageDiv.innerHTML = `<strong>${sender === 'user' ? 'ನೀವು' : 'ಸೀರೆ ಮಹಲ್'}:</strong> ${message}`;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Function to show loading indicator
+function showLoading() {
+    const chatMessages = document.getElementById("chatMessages");
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "loading-indicator";
+    loadingDiv.innerHTML = "<em>ಟೈಪ್ ಮಾಡಲಾಗುತ್ತಿದೆ...</em>";
+    chatMessages.appendChild(loadingDiv);
+    return loadingDiv;
+}
+
+// Function to remove loading indicator
+function removeLoading(loadingElement) {
+    if (loadingElement && loadingElement.parentNode) {
+        loadingElement.parentNode.removeChild(loadingElement);
+    }
+}
+
+// Add these styles to your existing style element
+const additionalStyles = `
+    .message {
+        margin: 8px 0;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+
+    .user-message {
+        background-color: #e3f2fd;
+        margin-left: auto;
+        border-bottom-right-radius: 2px;
+    }
+
+    .bot-message {
+        background-color: #f5f5f5;
+        margin-right: auto;
+        border-bottom-left-radius: 2px;
+    }
+
+    .error-message {
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 8px;
+        border-radius: 4px;
+        margin: 8px 0;
+    }
+
+    .loading-indicator {
+        color: #666;
+        padding: 8px;
+        font-style: italic;
+    }
+
+    #chatMessages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #chatMessages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    #chatMessages::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+`;
+
+// Append additional styles
+style.textContent += additionalStyles;
+
+// Initialize chatbot
+window.onload = () => {
+    const chatMessages = document.getElementById("chatMessages");
+    chatMessages.innerHTML = ''; // Clear any existing messages
+    if (document.getElementById("chatbot").style.display === "flex") {
+        showGreeting();
+    }
+};
+</script>
+
+</body>
+</html>
